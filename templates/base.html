@@ -1,0 +1,73 @@
+{% load static %}
+{% load django_bootstrap5 %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>{% block title %}FIFA World Cup Prediction Contest{% endblock %}</title>
+    {% bootstrap_css %}
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+    <link rel="stylesheet" href="{% static 'css/theme.css' %}">
+    {% block extra_css %}{% endblock %}
+</head>
+<body>
+<nav class="navbar navbar-expand-lg navbar-dark app-navbar mb-4">
+    <div class="container">
+        <a class="navbar-brand" href="{% url 'accounts:dashboard' %}">&#127942; FIFA Prediction Contest</a>
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navMain">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="navMain">
+            {% if user.is_authenticated %}
+            <ul class="navbar-nav me-auto">
+                <li class="nav-item"><a class="nav-link{% if request.resolver_match.view_name == 'accounts:dashboard' %} active{% endif %}" href="{% url 'accounts:dashboard' %}">Dashboard</a></li>
+                <li class="nav-item"><a class="nav-link{% if request.resolver_match.app_name == 'matches' and request.resolver_match.url_name == 'upcoming' %} active{% endif %}" href="{% url 'matches:upcoming' %}">Upcoming Matches</a></li>
+                {% if user.is_staff %}
+                <li class="nav-item"><a class="nav-link{% if request.resolver_match.url_name == 'submit_results' %} active{% endif %}" href="{% url 'matches:submit_results' %}">Enter Results</a></li>
+                {% else %}
+                <li class="nav-item"><a class="nav-link{% if request.resolver_match.url_name == 'my_predictions' %} active{% endif %}" href="{% url 'predictions:my_predictions' %}">My Predictions</a></li>
+                {% endif %}
+                <li class="nav-item"><a class="nav-link{% if request.resolver_match.url_name == 'leaderboard' %} active{% endif %}" href="{% url 'predictions:leaderboard' %}">Leaderboard</a></li>
+                <li class="nav-item"><a class="nav-link{% if request.resolver_match.app_name == 'contests' %} active{% endif %}" href="{% url 'contests:groups' %}">Groups</a></li>
+                {% if user.is_staff %}
+                <li class="nav-item"><a class="nav-link{% if request.resolver_match.url_name == 'manage_points' %} active{% endif %}" href="{% url 'predictions:manage_points' %}">Manage Points</a></li>
+                {% endif %}
+                {% if user.is_staff %}
+                <li class="nav-item"><a class="nav-link" href="/admin/">Admin Panel</a></li>
+                {% endif %}
+            </ul>
+            <ul class="navbar-nav">
+                <li class="nav-item">
+                    <form method="post" action="{% url 'accounts:logout' %}" class="d-inline">
+                        {% csrf_token %}
+                        <button type="submit" class="btn btn-link nav-link" title="Logout {{ user.username }}"><i class="bi bi-box-arrow-right"></i> Logout</button>
+                    </form>
+                </li>
+            </ul>
+            {% else %}
+            <ul class="navbar-nav ms-auto">
+                <li class="nav-item"><a class="nav-link" href="{% url 'accounts:login' %}">Login</a></li>
+                <li class="nav-item"><a class="nav-link" href="{% url 'accounts:register' %}">Register</a></li>
+            </ul>
+            {% endif %}
+        </div>
+    </div>
+</nav>
+
+<main class="app-main">
+    <div class="container">
+        {% bootstrap_messages %}
+        {% block content %}{% endblock %}
+    </div>
+</main>
+
+<footer class="app-footer">
+    <div class="brand-strip">Analystor Technologies</div>
+    <div class="footer-copy">&copy; {% now "Y" %} FIFA World Cup Prediction Contest</div>
+</footer>
+
+{% bootstrap_javascript %}
+{% block extra_js %}{% endblock %}
+</body>
+</html>

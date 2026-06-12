@@ -1,0 +1,11 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(mkdir -p static templates)",
+      "Bash(./venv/Scripts/python.exe manage.py migrate)",
+      "Bash(./venv/Scripts/python.exe manage.py check)",
+      "Bash(./venv/Scripts/python.exe manage.py shell -c ' *)",
+      "Bash(./venv/Scripts/python.exe -m pip freeze)"
+    ]
+  }
+}

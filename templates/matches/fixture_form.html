@@ -1,0 +1,36 @@
+{% extends 'base.html' %}
+{% load django_bootstrap5 %}
+
+{% block title %}Add Fixture - FIFA Prediction Contest{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/choices.js/public/assets/styles/choices.min.css">
+{% endblock %}
+
+{% block content %}
+<h2 class="mb-4">&#9917; Add Fixture</h2>
+
+<div class="card">
+    <div class="card-body p-4">
+        <form method="post" novalidate>
+            {% csrf_token %}
+            {% bootstrap_form form %}
+            <button type="submit" class="btn btn-primary">Add Fixture</button>
+            <a href="{% url 'matches:upcoming' %}" class="btn btn-outline-secondary">Back to Matches</a>
+        </form>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/choices.js/public/assets/scripts/choices.min.js"></script>
+<script>
+    document.querySelectorAll('.choices-select').forEach(function (el) {
+        new Choices(el, {
+            searchEnabled: true,
+            itemSelectText: '',
+            shouldSort: false,
+        });
+    });
+</script>
+{% endblock %}

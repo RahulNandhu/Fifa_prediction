@@ -1,0 +1,120 @@
+{% extends 'base.html' %}
+
+{% block title %}Upcoming Matches - FIFA Prediction Contest{% endblock %}
+
+{% block content %}
+<div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-4">
+    <h2 class="mb-0">&#9917; Matches</h2>
+    {% if user.is_staff %}
+    <a href="{% url 'matches:create_fixture' %}" class="btn btn-success">+ Add Fixture</a>
+    {% endif %}
+</div>
+
+{% if rows %}
+<div class="table-responsive">
+<table class="table table-hover align-middle">
+    <thead>
+        <tr>
+            <th>Match</th>
+            <th>Kickoff</th>
+            <th>Result</th>
+            <th>Your Prediction</th>
+            <th>Stats</th>
+            <th></th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for row in rows %}
+        <tr>
+            <td>{{ row.match.home_team }} vs {{ row.match.away_team }}</td>
+            <td>{{ row.match.kickoff_at }}</td>
+            <td>
+                {% if row.match.has_result %}
+                {{ row.match.home_score }} - {{ row.match.away_score }}
+                {% else %}
+                &mdash;
+                {% endif %}
+            </td>
+            <td>
+                {% if row.prediction %}
+                Winner: {{ row.prediction.get_predicted_winner_display }}<br>
+                Score: {{ row.prediction.predicted_home_score }} - {{ row.prediction.predicted_away_score }}
+                {% if row.match.has_result %}
+                <br><span class="badge bg-info text-dark">{{ row.prediction.points_awarded }} pts</span>
+                {% endif %}
+                {% else %}
+                <span class="text-muted">No prediction</span>
+                {% endif %}
+            </td>
+            <td>
+                {% if row.deadline_passed %}
+                    {% if row.stats %}
+                    Home: {{ row.stats.home_pct }}% &middot;
+                    Draw: {{ row.stats.draw_pct }}% &middot;
+                    Away: {{ row.stats.away_pct }}%
+                    {% else %}
+                    No predictions submitted.
+                    {% endif %}
+                {% else %}
+                Predictions Submitted: {{ row.predictions_count }}
+                {% endif %}
+            </td>
+            <td>
+                {% if user.is_staff %}
+                <span class="text-muted">&mdash;</span>
+                {% elif not row.deadline_passed %}
+                <a href="{% url 'predictions:predict' row.match.id %}" class="btn btn-sm btn-primary">
+                    {% if row.prediction %}Edit Prediction{% else %}Predict{% endif %}
+                </a>
+                {% else %}
+                <span class="text-muted">Closed</span>
+                {% endif %}
+                {% if user.is_staff %}
+                <form method="post" action="{% url 'matches:unpublish_match' row.match.id %}" class="d-inline">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-sm btn-outline-secondary">Unpublish</button>
+                </form>
+                {% endif %}
+            </td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+</div>
+{% else %}
+<p>No matches have been published yet.</p>
+{% endif %}
+
+{% if user.is_staff and unpublished_fixtures %}
+<h3 class="mt-5 mb-3">Unpublished Fixtures</h3>
+<div class="table-responsive">
+<table class="table table-hover align-middle">
+    <thead>
+        <tr>
+            <th>Match</th>
+            <th>Kickoff</th>
+            <th>Stage</th>
+            <th>Venue</th>
+            <th></th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for fixture in unpublished_fixtures %}
+        <tr>
+            <td>{{ fixture.home_team }} vs {{ fixture.away_team }}</td>
+            <td>{{ fixture.kickoff_at }}</td>
+            <td>{{ fixture.stage }}</td>
+            <td>{{ fixture.venue }}</td>
+            <td>
+                <form method="post" action="{% url 'matches:publish_fixture' fixture.id %}" class="d-inline">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-sm btn-success">Publish</button>
+                </form>
+            </td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+</div>
+{% endif %}
+{% endblock %}

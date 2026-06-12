@@ -1,0 +1,53 @@
+{% extends 'base.html' %}
+
+{% block title %}Enter Results - FIFA Prediction Contest{% endblock %}
+
+{% block content %}
+<h2 class="mb-4">&#128203; Enter Match Results</h2>
+
+{% if rows %}
+<p class="text-muted">
+    Enter the final score for a match and save. Points for every user's prediction will be
+    calculated automatically and applied across all contest groups.
+</p>
+<div class="table-responsive">
+<table class="table table-hover align-middle">
+    <thead>
+        <tr>
+            <th>Match</th>
+            <th>Kickoff</th>
+            <th>Current Result</th>
+            <th>Set Result</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for row in rows %}
+        <tr>
+            <td>{{ row.match.home_team }} vs {{ row.match.away_team }}</td>
+            <td>{{ row.match.kickoff_at }}</td>
+            <td>
+                {% if row.match.has_result %}
+                <span class="badge bg-success">{{ row.match.home_score }} - {{ row.match.away_score }}</span>
+                {% else %}
+                <span class="badge bg-secondary">Pending</span>
+                {% endif %}
+            </td>
+            <td>
+                <form method="post" action="{% url 'matches:submit_results' %}" class="d-flex align-items-center gap-2">
+                    {% csrf_token %}
+                    <input type="hidden" name="match_id" value="{{ row.match.id }}">
+                    {{ row.form.home_score }}
+                    <span>&ndash;</span>
+                    {{ row.form.away_score }}
+                    <button type="submit" class="btn btn-sm btn-primary">Save</button>
+                </form>
+            </td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+</div>
+{% else %}
+<p>No published matches yet. Publish a fixture from the Matches page first.</p>
+{% endif %}
+{% endblock %}

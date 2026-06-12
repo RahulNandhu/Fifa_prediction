@@ -1,0 +1,30 @@
+databases:
+  - name: fifa-db
+    plan: free
+    databaseName: fifa
+    user: fifa
+
+services:
+  - type: web
+    name: fifa-prediction-contest
+    runtime: python
+    plan: free
+    buildCommand: "./build.sh"
+    startCommand: "gunicorn config.wsgi:application"
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.11.9
+      - key: SECRET_KEY
+        generateValue: true
+      - key: DEBUG
+        value: "False"
+      - key: ALLOWED_HOSTS
+        value: ""
+      - key: DATABASE_URL
+        fromDatabase:
+          name: fifa-db
+          property: connectionString
+      - key: DJANGO_ADMIN_USERNAME
+        value: Analystor
+      - key: DJANGO_ADMIN_PASSWORD
+        value: Analystor@2026

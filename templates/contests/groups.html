@@ -1,0 +1,101 @@
+{% extends 'base.html' %}
+
+{% block title %}Contest Groups - FIFA Prediction Contest{% endblock %}
+
+{% block content %}
+<div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-4">
+    <h2 class="mb-0">&#127942; Contest Groups</h2>
+    {% if user.is_staff %}
+    <a href="{% url 'contests:create_group' %}" class="btn btn-success">+ Create Group</a>
+    {% endif %}
+</div>
+
+{% if group_rows %}
+<div class="table-responsive">
+<table class="table table-hover align-middle">
+    <thead>
+        <tr>
+            <th>Group</th>
+            <th>Description</th>
+            <th>Status</th>
+            <th></th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for row in group_rows %}
+        <tr>
+            <td>{{ row.group.name }}</td>
+            <td>{{ row.group.description }}</td>
+            <td>
+                {% if user.is_staff %}
+                <span class="badge bg-secondary">Admin</span>
+                {% elif row.membership %}
+                    {% if row.membership.status == 'APPROVED' %}
+                    <span class="badge bg-success">Approved</span>
+                    {% elif row.membership.status == 'PENDING' %}
+                    <span class="badge bg-warning text-dark">Pending Approval</span>
+                    {% else %}
+                    <span class="badge bg-danger">Rejected</span>
+                    {% endif %}
+                {% else %}
+                <span class="badge bg-secondary">Not Requested</span>
+                {% endif %}
+            </td>
+            <td>
+                {% if not user.is_staff %}
+                    {% if not row.membership or row.membership.status == 'REJECTED' %}
+                    <form method="post" action="{% url 'contests:request_join' row.group.id %}">
+                        {% csrf_token %}
+                        <button type="submit" class="btn btn-sm btn-primary">Request to Join</button>
+                    </form>
+                    {% endif %}
+                {% endif %}
+            </td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+</div>
+{% else %}
+<p>No contest groups are available right now.</p>
+{% endif %}
+
+{% if user.is_staff and pending_requests is not None %}
+<h3 class="mt-5 mb-3">Pending Membership Requests</h3>
+{% if pending_requests %}
+<div class="table-responsive">
+<table class="table table-hover align-middle">
+    <thead>
+        <tr>
+            <th>User</th>
+            <th>Group</th>
+            <th>Requested</th>
+            <th></th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for membership in pending_requests %}
+        <tr>
+            <td>{{ membership.user.username }}</td>
+            <td>{{ membership.group.name }}</td>
+            <td>{{ membership.requested_at }}</td>
+            <td>
+                <form method="post" action="{% url 'contests:approve_membership' membership.id %}" class="d-inline">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-sm btn-success">Approve</button>
+                </form>
+                <form method="post" action="{% url 'contests:reject_membership' membership.id %}" class="d-inline">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-sm btn-outline-danger">Reject</button>
+                </form>
+            </td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+</div>
+{% else %}
+<p>No pending membership requests.</p>
+{% endif %}
+{% endif %}
+{% endblock %}

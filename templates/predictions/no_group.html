@@ -1,0 +1,13 @@
+{% extends 'base.html' %}
+
+{% block title %}Leaderboard - FIFA Prediction Contest{% endblock %}
+
+{% block content %}
+<h2 class="mb-4">&#127942; Leaderboard</h2>
+{% if user.is_staff %}
+<p>No contest groups have been created yet.</p>
+{% else %}
+<p>You need to be an approved member of a contest group to view leaderboards.</p>
+<a href="{% url 'contests:groups' %}" class="btn btn-primary">View Contest Groups</a>
+{% endif %}
+{% endblock %}

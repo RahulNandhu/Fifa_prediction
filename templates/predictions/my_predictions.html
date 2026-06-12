@@ -1,0 +1,50 @@
+{% extends 'base.html' %}
+
+{% block title %}My Predictions - FIFA Prediction Contest{% endblock %}
+
+{% block content %}
+<h2 class="mb-4">&#128203; My Predictions</h2>
+
+{% if predictions %}
+<div class="table-responsive">
+<table class="table table-hover align-middle">
+    <thead>
+        <tr>
+            <th>Match</th>
+            <th>Kickoff</th>
+            <th>Your Winner Pick</th>
+            <th>Your Scoreline</th>
+            <th>Actual Result</th>
+            <th>Points</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for prediction in predictions %}
+        <tr>
+            <td>{{ prediction.match.home_team }} vs {{ prediction.match.away_team }}</td>
+            <td>{{ prediction.match.kickoff_at }}</td>
+            <td>{{ prediction.get_predicted_winner_display }}</td>
+            <td>{{ prediction.predicted_home_score }} - {{ prediction.predicted_away_score }}</td>
+            <td>
+                {% if prediction.match.has_result %}
+                {{ prediction.match.home_score }} - {{ prediction.match.away_score }}
+                {% else %}
+                &mdash;
+                {% endif %}
+            </td>
+            <td>
+                {% if prediction.match.has_result %}
+                <span class="badge bg-info text-dark">{{ prediction.points_awarded }}</span>
+                {% else %}
+                &mdash;
+                {% endif %}
+            </td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+</div>
+{% else %}
+<p>You haven't submitted any predictions yet. <a href="{% url 'matches:upcoming' %}">View matches</a></p>
+{% endif %}
+{% endblock %}

@@ -1,0 +1,97 @@
+{% extends 'base.html' %}
+
+{% block title %}Dashboard - FIFA Prediction Contest{% endblock %}
+
+{% block content %}
+<div class="hero-banner">
+    <h2>Welcome, {{ user.first_name|default:user.username }}! &#9917;</h2>
+    <p>Here's your prediction contest snapshot.</p>
+</div>
+
+<div class="row">
+    <div class="col-md-7">
+        <div class="card mb-4">
+            <div class="card-header">&#9917; Upcoming Matches</div>
+            <div class="card-body">
+                {% if upcoming_matches %}
+                <div class="table-responsive">
+                <table class="table table-sm">
+                    <thead>
+                        <tr>
+                            <th>Match</th>
+                            <th>Kickoff</th>
+                            <th>Prediction Status</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for match in upcoming_matches %}
+                        <tr>
+                            <td>{{ match.home_team }} vs {{ match.away_team }}</td>
+                            <td>{{ match.kickoff_at }}</td>
+                            <td>
+                                {% if match.id in predicted_match_ids %}
+                                <span class="badge bg-success">Predicted</span>
+                                {% else %}
+                                <span class="badge bg-warning text-dark">Not Predicted</span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+                </div>
+                <a href="{% url 'matches:upcoming' %}" class="btn btn-sm btn-primary">View All Matches</a>
+                {% else %}
+                <p class="mb-0">No published matches yet.</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-5">
+        <div class="card mb-4">
+            <div class="card-header">&#128101; Group Membership Status</div>
+            <div class="card-body">
+                {% if memberships %}
+                <ul class="list-group list-group-flush">
+                    {% for membership in memberships %}
+                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                        {{ membership.group.name }}
+                        {% if membership.status == 'APPROVED' %}
+                        <span class="badge bg-success">Approved</span>
+                        {% elif membership.status == 'PENDING' %}
+                        <span class="badge bg-warning text-dark">Pending</span>
+                        {% else %}
+                        <span class="badge bg-danger">Rejected</span>
+                        {% endif %}
+                    </li>
+                    {% endfor %}
+                </ul>
+                {% else %}
+                <p>You haven't requested to join any contest groups yet.</p>
+                {% endif %}
+                <a href="{% url 'contests:groups' %}" class="btn btn-sm btn-outline-primary mt-3">Manage Groups</a>
+            </div>
+        </div>
+
+        <div class="card mb-4">
+            <div class="card-header">&#127942; Leaderboard Summary</div>
+            <div class="card-body">
+                {% if leaderboard_summaries %}
+                <ul class="list-group list-group-flush">
+                    {% for summary in leaderboard_summaries %}
+                    <li class="list-group-item">
+                        <strong>{{ summary.group.name }}</strong><br>
+                        Rank {{ summary.rank }} of {{ summary.total_participants }} &mdash; {{ summary.points }} points
+                    </li>
+                    {% endfor %}
+                </ul>
+                <a href="{% url 'predictions:leaderboard' %}" class="btn btn-sm btn-outline-primary mt-3">View Leaderboards</a>
+                {% else %}
+                <p class="mb-0">Join an approved group to see your leaderboard standing.</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

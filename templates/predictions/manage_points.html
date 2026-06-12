@@ -1,0 +1,99 @@
+{% extends 'base.html' %}
+
+{% block title %}Manage Points - FIFA Prediction Contest{% endblock %}
+
+{% block content %}
+<h2 class="mb-4">&#9999;&#65039; Manage Points</h2>
+
+{% if groups %}
+{% if groups|length > 1 %}
+<form method="get" class="mb-3">
+    <select name="group" class="form-select" style="max-width: 300px;" onchange="this.form.submit()">
+        {% for group in groups %}
+        <option value="{{ group.id }}" {% if group.id == selected_group.id %}selected{% endif %}>{{ group.name }}</option>
+        {% endfor %}
+    </select>
+</form>
+{% else %}
+<h5 class="text-muted mb-3">{{ selected_group.name }}</h5>
+{% endif %}
+
+<p class="text-muted">
+    Use this to correct a user's points if an error happened during automatic scoring.
+    Enter a positive value to add points or a negative value to deduct them, along with a
+    reason. Every adjustment is logged below.
+</p>
+
+{% if entries %}
+<div class="table-responsive">
+<table class="table table-hover align-middle">
+    <thead>
+        <tr>
+            <th>User</th>
+            <th>Current Points</th>
+            <th>Adjust Points</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for entry in entries %}
+        <tr>
+            <td>{{ entry.user.first_name|default:entry.user.username }} {{ entry.user.last_name }}</td>
+            <td><span class="badge bg-info text-dark">{{ entry.points }} pts</span></td>
+            <td>
+                <form method="post" action="{% url 'predictions:manage_points' %}" class="d-flex flex-wrap align-items-center gap-2">
+                    {% csrf_token %}
+                    <input type="hidden" name="group_id" value="{{ selected_group.id }}">
+                    <input type="hidden" name="user_id" value="{{ entry.user.id }}">
+                    <input type="number" name="points" class="form-control form-control-sm" style="width: 5.5rem;" placeholder="+/- pts" required>
+                    <input type="text" name="reason" maxlength="255" class="form-control form-control-sm" style="min-width: 10rem; flex: 1 1 10rem;" placeholder="Reason for adjustment" required>
+                    <button type="submit" class="btn btn-sm btn-primary">Apply</button>
+                </form>
+            </td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+</div>
+{% else %}
+<p>This group has no approved members yet.</p>
+{% endif %}
+
+{% if recent_adjustments %}
+<h3 class="mt-5 mb-3">Recent Manual Adjustments</h3>
+<div class="table-responsive">
+<table class="table table-hover align-middle">
+    <thead>
+        <tr>
+            <th>User</th>
+            <th>Points</th>
+            <th>Reason</th>
+            <th>By</th>
+            <th>When</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for txn in recent_adjustments %}
+        <tr>
+            <td>{{ txn.user.first_name|default:txn.user.username }} {{ txn.user.last_name }}</td>
+            <td>
+                {% if txn.points >= 0 %}
+                <span class="badge bg-success">+{{ txn.points }}</span>
+                {% else %}
+                <span class="badge bg-danger">{{ txn.points }}</span>
+                {% endif %}
+            </td>
+            <td>{{ txn.reason }}</td>
+            <td>{{ txn.created_by.username|default:"—" }}</td>
+            <td>{{ txn.created_at }}</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+</div>
+{% endif %}
+
+{% else %}
+<p>No contest groups have been created yet. Create a contest group first.</p>
+<a href="{% url 'contests:create_group' %}" class="btn btn-primary">Create Contest Group</a>
+{% endif %}
+{% endblock %}

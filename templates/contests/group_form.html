@@ -1,0 +1,19 @@
+{% extends 'base.html' %}
+{% load django_bootstrap5 %}
+
+{% block title %}Create Group - FIFA Prediction Contest{% endblock %}
+
+{% block content %}
+<h2 class="mb-4">&#127942; Create Contest Group</h2>
+
+<div class="card">
+    <div class="card-body p-4">
+        <form method="post" novalidate>
+            {% csrf_token %}
+            {% bootstrap_form form %}
+            <button type="submit" class="btn btn-primary">Create Group</button>
+            <a href="{% url 'contests:groups' %}" class="btn btn-outline-secondary">Back to Groups</a>
+        </form>
+    </div>
+</div>
+{% endblock %}
