@@ -10,6 +10,15 @@ class Outcome(models.TextChoices):
     DRAW = 'DRAW', 'Draw'
 
 
+# England and Scotland have no ISO 3166-1 country code of their own (they fall
+# under GB), so their flags can't be derived from a 2-letter code via the regional
+# indicator formula below. These are the Unicode tag-sequence flags for each.
+_FLAG_OVERRIDES = {
+    'EN': '\U0001F3F4\U000E0067\U000E0062\U000E0065\U000E006E\U000E0067\U000E007F',  # England
+    'SC': '\U0001F3F4\U000E0067\U000E0062\U000E0073\U000E0063\U000E0074\U000E007F',  # Scotland
+}
+
+
 class Team(models.Model):
     """A national team, identified by its ISO 3166-1 alpha-2 country code."""
 
@@ -24,7 +33,10 @@ class Team(models.Model):
 
     @property
     def flag(self):
-        return ''.join(chr(0x1F1E6 + ord(c) - ord('A')) for c in self.code.upper())
+        code = self.code.upper()
+        if code in _FLAG_OVERRIDES:
+            return _FLAG_OVERRIDES[code]
+        return ''.join(chr(0x1F1E6 + ord(c) - ord('A')) for c in code)
 
 
 class Fixture(models.Model):
