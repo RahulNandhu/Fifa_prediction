@@ -81,6 +81,7 @@ TEMPLATES = [
                 'django.template.context_processors.request',
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
+                'accounts.context_processors.knockout_modal',
             ],
         },
     },
@@ -172,5 +173,4 @@ LOGOUT_REDIRECT_URL = 'accounts:login'
 
 
 # Prediction settings
-
 PREDICTION_DEADLINE_MINUTES_BEFORE_KICKOFF = 330

@@ -8,7 +8,7 @@ from django.utils import timezone
 from predictions.models import Prediction
 from predictions.services import process_match_result
 
-from .forms import FixtureForm, MatchResultForm
+from .forms import FixtureForm, MatchResultForm, PenaltyResultForm
 from .models import Fixture, Match, Outcome
 
 
@@ -16,11 +16,10 @@ from .models import Fixture, Match, Outcome
 def upcoming(request):
     now = timezone.now()
 
-    matches = (
-        Match.objects.filter(published=True)
-        .select_related('fixture')
-        .order_by('fixture__kickoff_at')
-    )
+    match_qs = Match.objects.filter(published=True).select_related('fixture')
+    if not request.user.is_staff:
+        match_qs = match_qs.filter(fixture__kickoff_at__gte=now)
+    matches = match_qs.order_by('fixture__kickoff_at')
 
     my_predictions = {
         p.match_id: p
@@ -85,6 +84,31 @@ def create_fixture(request):
 
 
 @staff_member_required
+def edit_fixture(request, fixture_id):
+    fixture = get_object_or_404(Fixture, id=fixture_id)
+    if request.method == 'POST':
+        form = FixtureForm(request.POST, instance=fixture)
+        if form.is_valid():
+            form.save()
+            messages.success(request, f'Fixture "{fixture}" updated.')
+            return redirect('matches:upcoming')
+    else:
+        form = FixtureForm(instance=fixture)
+
+    return render(request, 'matches/fixture_form.html', {'form': form, 'editing': True, 'fixture': fixture})
+
+
+@staff_member_required
+def delete_fixture(request, fixture_id):
+    fixture = get_object_or_404(Fixture, id=fixture_id)
+    if request.method == 'POST':
+        name = str(fixture)
+        fixture.delete()
+        messages.success(request, f'Fixture "{name}" deleted.')
+    return redirect('matches:upcoming')
+
+
+@staff_member_required
 def publish_fixture(request, fixture_id):
     fixture = get_object_or_404(Fixture, id=fixture_id)
 
@@ -116,18 +140,36 @@ def unpublish_match(request, match_id):
 def submit_results(request):
     if request.method == 'POST':
         match = get_object_or_404(Match, id=request.POST.get('match_id'), published=True)
-        form = MatchResultForm(request.POST, instance=match)
-        if form.is_valid():
-            form.save()
-            if match.has_result:
+        save_type = request.POST.get('save_type', 'result')
+
+        if save_type == 'penalty':
+            form = PenaltyResultForm(request.POST, instance=match)
+            if form.is_valid():
+                form.save()
                 process_match_result(match)
                 messages.success(
                     request,
-                    f'Result saved for "{match.fixture}" ({match.home_score} - {match.away_score}). '
-                    f'Points have been recalculated for all groups.',
+                    f'Penalty result saved for "{match.fixture}" '
+                    f'({match.penalty_home_score} - {match.penalty_away_score}). '
+                    f'Points have been recalculated.',
                 )
-            else:
-                messages.success(request, f'Result saved for "{match.fixture}".')
+        else:
+            form = MatchResultForm(request.POST, instance=match)
+            if form.is_valid():
+                saved = form.save(commit=False)
+                if saved.home_score != saved.away_score:
+                    saved.penalty_home_score = None
+                    saved.penalty_away_score = None
+                saved.save()
+                if match.has_result:
+                    process_match_result(match)
+                    messages.success(
+                        request,
+                        f'Result saved for "{match.fixture}" ({match.home_score} - {match.away_score}). '
+                        f'Points have been recalculated for all groups.',
+                    )
+                else:
+                    messages.success(request, f'Result saved for "{match.fixture}".')
         return redirect('matches:submit_results')
 
     matches = (
@@ -135,6 +177,13 @@ def submit_results(request):
         .select_related('fixture', 'fixture__home_team', 'fixture__away_team')
         .order_by('fixture__kickoff_at')
     )
-    rows = [{'match': match, 'form': MatchResultForm(instance=match)} for match in matches]
+    rows = [
+        {
+            'match': match,
+            'form': MatchResultForm(instance=match),
+            'penalty_form': PenaltyResultForm(instance=match),
+        }
+        for match in matches
+    ]
 
     return render(request, 'matches/submit_results.html', {'rows': rows})

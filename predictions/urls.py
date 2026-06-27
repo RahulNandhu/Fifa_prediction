@@ -9,4 +9,5 @@ urlpatterns = [
     path('<int:match_id>/predict/', views.predict, name='predict'),
     path('leaderboard/', views.leaderboard, name='leaderboard'),
     path('points/', views.manage_points, name='manage_points'),
+    path('leader-taunt/', views.leader_taunt, name='leader_taunt'),
 ]

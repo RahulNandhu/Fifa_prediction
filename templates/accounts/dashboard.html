@@ -15,24 +15,33 @@
             <div class="card-body">
                 {% if upcoming_matches %}
                 <div class="table-responsive">
-                <table class="table table-sm">
+                <table class="table table-sm align-middle">
                     <thead>
                         <tr>
                             <th>Match</th>
                             <th>Kickoff</th>
-                            <th>Prediction Status</th>
+                            <th></th>
                         </tr>
                     </thead>
                     <tbody>
                         {% for match in upcoming_matches %}
                         <tr>
-                            <td>{{ match.home_team }} vs {{ match.away_team }}</td>
-                            <td>{{ match.kickoff_at }}</td>
                             <td>
-                                {% if match.id in predicted_match_ids %}
-                                <span class="badge bg-success">Predicted</span>
+                                {{ match.home_team }} vs {{ match.away_team }}
+                                {% if match.is_knockout %}<span class="badge bg-warning text-dark ms-1" style="font-size:.65rem;">KO</span>{% endif %}
+                            </td>
+                            <td class="text-nowrap" style="font-size:.85rem;">{{ match.kickoff_at }}</td>
+                            <td class="text-end text-nowrap">
+                                {% if match.id in open_match_ids and is_approved %}
+                                    {% if match.id in predicted_match_ids %}
+                                    <a href="{% url 'predictions:predict' match.id %}" class="btn btn-sm btn-outline-success">&#9999;&#65039; Edit</a>
+                                    {% else %}
+                                    <a href="{% url 'predictions:predict' match.id %}" class="btn btn-sm btn-primary">Predict</a>
+                                    {% endif %}
+                                {% elif match.id in predicted_match_ids %}
+                                <span class="badge bg-success">&#10003; Predicted</span>
                                 {% else %}
-                                <span class="badge bg-warning text-dark">Not Predicted</span>
+                                <span class="badge bg-secondary">Closed</span>
                                 {% endif %}
                             </td>
                         </tr>
@@ -40,7 +49,7 @@
                     </tbody>
                 </table>
                 </div>
-                <a href="{% url 'matches:upcoming' %}" class="btn btn-sm btn-primary">View All Matches</a>
+                <a href="{% url 'matches:upcoming' %}" class="btn btn-sm btn-outline-primary">View All Matches</a>
                 {% else %}
                 <p class="mb-0">No published matches yet.</p>
                 {% endif %}

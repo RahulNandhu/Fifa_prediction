@@ -1,21 +1,21 @@
 {% extends 'base.html' %}
 {% load django_bootstrap5 %}
 
-{% block title %}Add Fixture - FIFA Prediction Contest{% endblock %}
+{% block title %}{% if editing %}Edit Fixture{% else %}Add Fixture{% endif %} - FIFA Prediction Contest{% endblock %}
 
 {% block extra_css %}
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/choices.js/public/assets/styles/choices.min.css">
 {% endblock %}
 
 {% block content %}
-<h2 class="mb-4">&#9917; Add Fixture</h2>
+<h2 class="mb-4">&#9917; {% if editing %}Edit Fixture{% else %}Add Fixture{% endif %}</h2>
 
 <div class="card">
     <div class="card-body p-4">
         <form method="post" novalidate>
             {% csrf_token %}
             {% bootstrap_form form %}
-            <button type="submit" class="btn btn-primary">Add Fixture</button>
+            <button type="submit" class="btn btn-primary">{% if editing %}Save Changes{% else %}Add Fixture{% endif %}</button>
             <a href="{% url 'matches:upcoming' %}" class="btn btn-outline-secondary">Back to Matches</a>
         </form>
     </div>
@@ -32,5 +32,20 @@
             shouldSort: false,
         });
     });
+
+    (function () {
+        var KNOCKOUT_FROM = '2026-06-29';
+        var kickoffInput = document.getElementById('id_kickoff_at');
+        var knockoutCheck = document.getElementById('id_is_knockout');
+        if (!kickoffInput || !knockoutCheck) return;
+        function updateKnockout() {
+            var val = kickoffInput.value;
+            if (!val) return;
+            if (val.substring(0, 10) >= KNOCKOUT_FROM) knockoutCheck.checked = true;
+        }
+        kickoffInput.addEventListener('change', updateKnockout);
+        kickoffInput.addEventListener('input', updateKnockout);
+        updateKnockout();
+    })();
 </script>
 {% endblock %}

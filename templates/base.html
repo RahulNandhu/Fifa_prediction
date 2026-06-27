@@ -69,5 +69,232 @@
 
 {% bootstrap_javascript %}
 {% block extra_js %}{% endblock %}
+
+{% if user.is_authenticated and not user.is_staff %}
+<style>
+#leaderTauntToast {
+    min-width: 300px;
+    max-width: 360px;
+    box-shadow: 0 8px 32px rgba(0,0,0,.45), 0 2px 8px rgba(0,0,0,.3);
+    border-radius: .6rem !important;
+    overflow: hidden;
+    border: 1px solid rgba(255,255,255,.08) !important;
+}
+#leaderTauntToast .toast-header {
+    background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+    border-bottom: 1px solid rgba(255,215,0,.25);
+    padding: .55rem .85rem;
+}
+#leaderTauntToast .toast-body {
+    background: linear-gradient(160deg, #0f3460 0%, #1a1a2e 100%);
+    color: #f0f0f0;
+    font-size: .9rem;
+    line-height: 1.5;
+    padding: .75rem .85rem .8rem;
+}
+#leaderTauntToast .taunt-group {
+    display: inline-block;
+    margin-top: .45rem;
+    font-size: .75rem;
+    color: rgba(255,255,255,.45);
+    letter-spacing: .02em;
+}
+#leaderTauntToast .taunt-pts {
+    display: inline-block;
+    background: rgba(255,215,0,.15);
+    border: 1px solid rgba(255,215,0,.35);
+    color: #ffd700;
+    border-radius: 2rem;
+    font-size: .72rem;
+    font-weight: 600;
+    padding: .1rem .55rem;
+    margin-left: .35rem;
+    letter-spacing: .03em;
+    vertical-align: middle;
+}
+</style>
+<div aria-live="polite" aria-atomic="true" class="position-fixed bottom-0 end-0 p-3" style="z-index:1100">
+    <div id="leaderTauntToast" class="toast border-0" role="alert" data-bs-autohide="true">
+        <div class="toast-header">
+            <span style="font-size:1.15rem;margin-right:.5rem;">🏆</span>
+            <strong class="me-auto" style="color:#ffd700;letter-spacing:.03em;font-size:.85rem;">CONTEST ALERT</strong>
+            <small style="color:rgba(255,255,255,.4);font-size:.72rem;">Live</small>
+            <button type="button" class="btn-close btn-close-white ms-2" data-bs-dismiss="toast" aria-label="Close" style="font-size:.7rem;"></button>
+        </div>
+        <div class="toast-body" id="leaderTauntMsg"></div>
+    </div>
+</div>
+<script>
+(function () {
+    var taunts = [
+        "👑 {name} is absolutely DOMINATING! Leading by {lead} pts. The rest of you are just spectators. 😤",
+        "🔥 {name} is on fire! {lead} points clear of everyone. Are you even trying? 👀",
+        "😏 Plot twist: {name} is STILL winning. +{lead} pts and counting...",
+        "🚀 {name} has left the chat... and the competition behind. By {lead} whole points.",
+        "⚽ Scientists cannot explain how {name} is {lead} points ahead. They just are.",
+        "😎 {name} predicted it all. Every. Single. Result. Currently {lead} pts ahead. Scary stuff.",
+        "🤌 Rumour has it {name}'s predictions are scripted. {lead} points clear and still going.",
+        "💀 {lead} points. That's the gap. That's the tweet. — {name}",
+        "🧠 {name} said 'hold my scoreline' and is now {lead} pts ahead. Respect.",
+        "😂 Breaking news: {name} leads by {lead} points. Everyone else in denial.",
+        "🎯 {name} is built different. {lead} points different, to be precise.",
+        "🫡 {name} sent their condolences to the rest of the group. Also, they lead by {lead} pts.",
+    ];
+
+    var selfTaunts = [
+        "😤 That's YOU at the top! {lead} pts clear. Let them sweat.",
+        "👑 You're literally the main character right now. +{lead} pts and THRIVING.",
+        "🏆 Congrats, you predicted this. All of it. Now sit back and enjoy the lead.",
+        "😎 +{lead} pts ahead. You're not just playing — you're winning. Big difference.",
+        "🚀 You've left everyone behind by {lead} points. Don't look down.",
+        "🤌 {lead} points clear. They're not even close. Keep it that way.",
+        "💅 The leaderboard called. It wants you to know you're winning by {lead} pts.",
+        "🎯 You're the problem everyone else is trying to solve. +{lead} pts and counting.",
+        "😂 Others are predicting. You're just... right. Leading by {lead} pts.",
+        "🔥 They're all chasing your shadow. {lead} points worth of shadow.",
+    ];
+
+    function pickTaunt(name, lead, isMe) {
+        var list = isMe ? selfTaunts : taunts;
+        var t = list[Math.floor(Math.random() * list.length)];
+        return t.replace(/\{name\}/g, name).replace(/\{lead\}/g, lead);
+    }
+
+    function showTaunt() {
+        fetch("{% url 'predictions:leader_taunt' %}", {credentials: 'same-origin'})
+            .then(function (r) { return r.json(); })
+            .then(function (data) {
+                if (!data.name) return;
+                var msg = pickTaunt(data.name, data.lead, data.is_me);
+                var group = data.group ? '<span class="taunt-group">📊 ' + data.group + '</span>' : '';
+                var pts = '<span class="taunt-pts">+' + data.lead + ' pts ahead</span>';
+                document.getElementById('leaderTauntMsg').innerHTML = msg + pts + '<br>' + group;
+                var toastEl = document.getElementById('leaderTauntToast');
+                var stayMs = (7 + Math.random() * 3) * 1000;
+                var existing = bootstrap.Toast.getInstance(toastEl);
+                if (existing) existing.dispose();
+                var toast = new bootstrap.Toast(toastEl, {autohide: true, delay: stayMs});
+                toast.show();
+            })
+            .catch(function () {});
+    }
+
+    var firstDelay = (5 + Math.random() * 5) * 1000;
+    setTimeout(function () {
+        showTaunt();
+        setInterval(showTaunt, (30 + Math.random() * 25) * 1000);
+    }, firstDelay);
+})();
+</script>
+{% endif %}
+
+{% if show_admin_knockout_modal %}
+<div class="modal fade" id="adminKnockoutModal" tabindex="-1" aria-labelledby="adminKnockoutModalLabel" aria-modal="true" role="dialog">
+    <div class="modal-dialog modal-dialog-centered modal-lg modal-dialog-scrollable">
+        <div class="modal-content">
+            <div class="modal-header" style="background:linear-gradient(135deg,#1a1a2e,#16213e);border-bottom:1px solid rgba(255,215,0,.25);">
+                <h5 class="modal-title text-warning fw-bold" id="adminKnockoutModalLabel">&#9889; Admin Guide &mdash; Knockout Stage Changes</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+
+                <h6 class="fw-bold mb-2">&#127942; 1 &mdash; Creating / Editing Fixtures</h6>
+                <ul class="mb-3">
+                    <li>Every fixture now has an <strong>Is Knockout</strong> checkbox.</li>
+                    <li>It <strong>auto-checks</strong> when you pick a kickoff date of <strong>June 29, 2026 or later</strong> — no need to tick it manually.</li>
+                    <li>You can still override it manually if needed.</li>
+                </ul>
+
+                <h6 class="fw-bold mb-2">&#128203; 2 &mdash; Entering Results (Enter Results page)</h6>
+                <ul class="mb-3">
+                    <li>Enter the full-time score (including extra time) and click <strong>Save</strong> as usual.</li>
+                    <li>For <span class="badge bg-warning text-dark">KO</span> matches: if the saved result is a <strong>draw</strong>, a second row appears below — <em>⚽ Pens: [ ] – [ ]</em>.</li>
+                    <li>Enter the penalty shootout score and click the separate <strong class="text-warning">Save Penalties</strong> button.</li>
+                    <li>Points are recalculated automatically after each save.</li>
+                </ul>
+
+                <h6 class="fw-bold mb-2">&#127919; 3 &mdash; New Point System (Knockout matches only)</h6>
+                <table class="table table-sm table-bordered mb-0">
+                    <thead class="table-light">
+                        <tr><th>Question</th><th class="text-center">Points</th></tr>
+                    </thead>
+                    <tbody>
+                        <tr><td>Correct result after 120 min (win or draw)</td><td class="text-center">2</td></tr>
+                        <tr><td>Exact scoreline after 120 min</td><td class="text-center">2</td></tr>
+                        <tr><td>Bonus: both correct</td><td class="text-center">+1</td></tr>
+                        <tr><td>Correct penalty shootout score <span class="text-muted small">(only if draw predicted)</span></td><td class="text-center">2</td></tr>
+                        <tr><td>Bonus: all three correct</td><td class="text-center">+1</td></tr>
+                        <tr class="table-success fw-semibold"><td>Maximum per match</td><td class="text-center">8</td></tr>
+                    </tbody>
+                </table>
+
+            </div>
+            <div class="modal-footer">
+                <button id="btn-dismiss-admin-knockout-modal" type="button" class="btn btn-outline-secondary btn-sm">Do not show this again</button>
+                <button type="button" class="btn btn-warning btn-sm" data-bs-dismiss="modal">Got it, close</button>
+            </div>
+        </div>
+    </div>
+</div>
+<script>
+(function () {
+    var modal = new bootstrap.Modal(document.getElementById('adminKnockoutModal'));
+    modal.show();
+    document.getElementById('btn-dismiss-admin-knockout-modal').addEventListener('click', function () {
+        var fd = new FormData();
+        fd.append('modal_type', 'admin');
+        fd.append('csrfmiddlewaretoken', '{{ csrf_token }}');
+        fetch("{% url 'accounts:dismiss_knockout_modal' %}", {method: 'POST', body: fd})
+            .finally(function () { modal.hide(); });
+    });
+})();
+</script>
+{% endif %}
+
+{% if show_knockout_modal %}
+<div class="modal fade" id="knockoutModal" tabindex="-1" aria-labelledby="knockoutModalLabel" aria-modal="true" role="dialog">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="knockoutModalLabel">&#9889; Knockout Stage &mdash; Updated Points System</h5>
+            </div>
+            <div class="modal-body">
+                <p>The World Cup has entered the <strong>knockout stage</strong>. Matches can now end in a draw after 120 minutes and go to a penalty shootout. The points system has been updated:</p>
+                <table class="table table-sm table-bordered mb-3">
+                    <thead class="table-light">
+                        <tr><th>Question</th><th class="text-center">Points</th></tr>
+                    </thead>
+                    <tbody>
+                        <tr><td>Correct result after 120 min (win or draw)</td><td class="text-center">2</td></tr>
+                        <tr><td>Exact scoreline after 120 min</td><td class="text-center">2</td></tr>
+                        <tr><td>Bonus: both of the above correct</td><td class="text-center">+1</td></tr>
+                        <tr><td>Correct penalty shootout score <span class="text-muted">(if you predicted draw)</span></td><td class="text-center">2</td></tr>
+                        <tr><td>Bonus: all three questions correct</td><td class="text-center">+1</td></tr>
+                        <tr class="table-success fw-semibold"><td>Maximum per match</td><td class="text-center">8</td></tr>
+                    </tbody>
+                </table>
+                <p class="text-muted small mb-0">Group stage matches already scored are not affected.</p>
+            </div>
+            <div class="modal-footer">
+                <button id="btn-dismiss-knockout-modal" type="button" class="btn btn-outline-secondary">Do not show this again</button>
+                <button type="button" class="btn btn-primary" data-bs-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+<script>
+(function () {
+    const el = document.getElementById('knockoutModal');
+    const modal = new bootstrap.Modal(el, {backdrop: 'static', keyboard: false});
+    modal.show();
+    document.getElementById('btn-dismiss-knockout-modal').addEventListener('click', function () {
+        fetch("{% url 'accounts:dismiss_knockout_modal' %}", {
+            method: 'POST',
+            headers: {'X-CSRFToken': '{{ csrf_token }}'},
+        }).finally(function () { modal.hide(); });
+    });
+})();
+</script>
+{% endif %}
 </body>
 </html>

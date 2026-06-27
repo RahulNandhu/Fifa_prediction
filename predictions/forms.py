@@ -8,11 +8,19 @@ from .models import PointTransaction, Prediction
 class PredictionForm(forms.ModelForm):
     class Meta:
         model = Prediction
-        fields = ('predicted_winner', 'predicted_home_score', 'predicted_away_score')
+        fields = (
+            'predicted_winner',
+            'predicted_home_score',
+            'predicted_away_score',
+            'predicted_penalty_home_score',
+            'predicted_penalty_away_score',
+        )
         widgets = {
             'predicted_winner': forms.RadioSelect,
             'predicted_home_score': forms.NumberInput(attrs={'min': 0, 'class': 'form-control score-input', 'placeholder': '0'}),
             'predicted_away_score': forms.NumberInput(attrs={'min': 0, 'class': 'form-control score-input', 'placeholder': '0'}),
+            'predicted_penalty_home_score': forms.NumberInput(attrs={'min': 0, 'class': 'form-control score-input', 'placeholder': '0'}),
+            'predicted_penalty_away_score': forms.NumberInput(attrs={'min': 0, 'class': 'form-control score-input', 'placeholder': '0'}),
         }
 
     def __init__(self, *args, match=None, **kwargs):
@@ -23,6 +31,12 @@ class PredictionForm(forms.ModelForm):
                 (Outcome.DRAW, 'Draw'),
                 (Outcome.AWAY, f'{match.away_team} to win'),
             ]
+        if not match or not match.is_knockout:
+            self.fields.pop('predicted_penalty_home_score', None)
+            self.fields.pop('predicted_penalty_away_score', None)
+        else:
+            self.fields['predicted_penalty_home_score'].required = False
+            self.fields['predicted_penalty_away_score'].required = False
 
 
 class PointAdjustmentForm(forms.ModelForm):

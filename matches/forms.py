@@ -11,7 +11,7 @@ class FixtureForm(forms.ModelForm):
 
     class Meta:
         model = Fixture
-        fields = ['home_team', 'away_team', 'kickoff_at', 'stage', 'venue']
+        fields = ['home_team', 'away_team', 'kickoff_at', 'stage', 'venue', 'is_knockout']
         widgets = {
             'home_team': forms.Select(attrs={'class': 'choices-select'}),
             'away_team': forms.Select(attrs={'class': 'choices-select'}),
@@ -36,3 +36,18 @@ class MatchResultForm(forms.ModelForm):
             'home_score': forms.NumberInput(attrs={'min': 0, 'class': 'form-control form-control-sm', 'style': 'width: 5rem'}),
             'away_score': forms.NumberInput(attrs={'min': 0, 'class': 'form-control form-control-sm', 'style': 'width: 5rem'}),
         }
+
+
+class PenaltyResultForm(forms.ModelForm):
+    class Meta:
+        model = Match
+        fields = ['penalty_home_score', 'penalty_away_score']
+        widgets = {
+            'penalty_home_score': forms.NumberInput(attrs={'min': 0, 'class': 'form-control form-control-sm', 'style': 'width: 5rem', 'placeholder': '–'}),
+            'penalty_away_score': forms.NumberInput(attrs={'min': 0, 'class': 'form-control form-control-sm', 'style': 'width: 5rem', 'placeholder': '–'}),
+        }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields['penalty_home_score'].required = False
+        self.fields['penalty_away_score'].required = False

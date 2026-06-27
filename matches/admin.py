@@ -14,12 +14,15 @@ class TeamAdmin(admin.ModelAdmin):
 
 @admin.register(Fixture)
 class FixtureAdmin(admin.ModelAdmin):
-    list_display = ('home_team', 'away_team', 'kickoff_at', 'stage', 'venue', 'is_published')
-    list_filter = ('stage',)
+    list_display = ('home_team', 'away_team', 'kickoff_at', 'stage', 'venue', 'is_knockout', 'is_published')
+    list_filter = ('stage', 'is_knockout')
     search_fields = ('home_team__name', 'away_team__name')
     ordering = ('kickoff_at',)
     autocomplete_fields = ('home_team', 'away_team')
     actions = ['publish_fixtures']
+
+    class Media:
+        js = ('admin/js/fixture_knockout.js',)
 
     @admin.display(description='Published', boolean=True)
     def is_published(self, obj):
@@ -40,16 +43,23 @@ class FixtureAdmin(admin.ModelAdmin):
 @admin.register(Match)
 class MatchAdmin(admin.ModelAdmin):
     list_display = (
-        'fixture', 'kickoff_at', 'published', 'prediction_deadline',
+        'fixture', 'kickoff_at', 'published', 'fixture_is_knockout', 'prediction_deadline',
         'home_score', 'away_score', 'result_processed',
     )
     list_filter = ('published', 'result_processed')
     search_fields = ('fixture__home_team__name', 'fixture__away_team__name')
     actions = ['publish_matches', 'unpublish_matches', 'recalculate_results']
     fields = (
-        'fixture', 'published', 'home_score', 'away_score', 'result_processed',
+        'fixture', 'published',
+        'home_score', 'away_score',
+        'penalty_home_score', 'penalty_away_score',
+        'result_processed',
     )
     readonly_fields = ('result_processed',)
+
+    @admin.display(description='Knockout', boolean=True)
+    def fixture_is_knockout(self, obj):
+        return obj.fixture.is_knockout
 
     @admin.action(description='Publish selected matches')
     def publish_matches(self, request, queryset):

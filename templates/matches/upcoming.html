@@ -105,11 +105,30 @@
             <td>{{ fixture.kickoff_at }}</td>
             <td>{{ fixture.stage }}</td>
             <td>{{ fixture.venue }}</td>
-            <td>
+            <td class="text-nowrap">
                 <form method="post" action="{% url 'matches:publish_fixture' fixture.id %}" class="d-inline">
                     {% csrf_token %}
                     <button type="submit" class="btn btn-sm btn-success">Publish</button>
                 </form>
+                <a href="{% url 'matches:edit_fixture' fixture.id %}" class="btn btn-sm btn-outline-primary ms-1">Edit</a>
+                <button type="button" class="btn btn-sm btn-outline-danger ms-1"
+                    data-bs-toggle="modal" data-bs-target="#deleteModal{{ fixture.id }}">Delete</button>
+
+                <div class="modal fade" id="deleteModal{{ fixture.id }}" tabindex="-1" aria-hidden="true">
+                    <div class="modal-dialog modal-dialog-centered modal-sm">
+                        <div class="modal-content">
+                            <div class="modal-body text-center py-4">
+                                <p class="mb-1 fw-semibold">Delete this fixture?</p>
+                                <p class="text-muted small mb-3">{{ fixture.home_team }} vs {{ fixture.away_team }}</p>
+                                <form method="post" action="{% url 'matches:delete_fixture' fixture.id %}">
+                                    {% csrf_token %}
+                                    <button type="submit" class="btn btn-danger btn-sm me-2">Yes, delete</button>
+                                    <button type="button" class="btn btn-outline-secondary btn-sm" data-bs-dismiss="modal">Cancel</button>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                </div>
             </td>
         </tr>
         {% endfor %}

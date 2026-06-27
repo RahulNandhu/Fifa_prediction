@@ -18,6 +18,8 @@ class Prediction(models.Model):
     predicted_winner = models.CharField(max_length=4, choices=Outcome.choices)
     predicted_home_score = models.PositiveIntegerField()
     predicted_away_score = models.PositiveIntegerField()
+    predicted_penalty_home_score = models.PositiveIntegerField(null=True, blank=True)
+    predicted_penalty_away_score = models.PositiveIntegerField(null=True, blank=True)
     points_awarded = models.PositiveIntegerField(default=0)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)

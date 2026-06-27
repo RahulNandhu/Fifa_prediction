@@ -47,6 +47,7 @@ class Fixture(models.Model):
     kickoff_at = models.DateTimeField()
     stage = models.CharField(max_length=100, blank=True)
     venue = models.CharField(max_length=150, blank=True)
+    is_knockout = models.BooleanField(default=False)
 
     class Meta:
         ordering = ['kickoff_at']
@@ -66,6 +67,8 @@ class Match(models.Model):
     published = models.BooleanField(default=False)
     home_score = models.PositiveIntegerField(null=True, blank=True)
     away_score = models.PositiveIntegerField(null=True, blank=True)
+    penalty_home_score = models.PositiveIntegerField(null=True, blank=True)
+    penalty_away_score = models.PositiveIntegerField(null=True, blank=True)
     result_processed = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
@@ -79,6 +82,10 @@ class Match(models.Model):
     @property
     def kickoff_at(self):
         return self.fixture.kickoff_at
+
+    @property
+    def is_knockout(self):
+        return self.fixture.is_knockout
 
     @property
     def home_team(self):
@@ -97,6 +104,10 @@ class Match(models.Model):
     @property
     def has_result(self):
         return self.home_score is not None and self.away_score is not None
+
+    @property
+    def has_penalty_result(self):
+        return self.penalty_home_score is not None and self.penalty_away_score is not None
 
     @property
     def actual_winner(self):

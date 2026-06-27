@@ -1,8 +1,10 @@
 from django.contrib import messages
 from django.contrib.auth import login
 from django.contrib.auth.decorators import login_required
+from django.http import JsonResponse
 from django.shortcuts import redirect, render
 from django.utils import timezone
+from django.views.decorators.http import require_POST
 
 from contests.models import GroupMembership
 from matches.models import Match
@@ -10,6 +12,7 @@ from predictions.leaderboard import overall_leaderboard
 from predictions.models import Prediction
 
 from .forms import RegisterForm
+from .models import KnockoutModalDismissal
 
 
 def register(request):
@@ -44,7 +47,11 @@ def dashboard(request):
         .values_list('match_id', flat=True)
     )
 
+    open_match_ids = {m.id for m in upcoming_matches if now < m.prediction_deadline}
+
     memberships = GroupMembership.objects.filter(user=request.user).select_related('group')
+
+    is_approved = memberships.filter(status=GroupMembership.Status.APPROVED).exists()
 
     leaderboard_summaries = []
     for membership in memberships:
@@ -61,7 +68,22 @@ def dashboard(request):
     context = {
         'upcoming_matches': upcoming_matches,
         'predicted_match_ids': predicted_match_ids,
+        'open_match_ids': open_match_ids,
+        'is_approved': is_approved,
         'memberships': memberships,
         'leaderboard_summaries': leaderboard_summaries,
     }
     return render(request, 'accounts/dashboard.html', context)
+
+
+@login_required
+@require_POST
+def dismiss_knockout_modal(request):
+    obj, _ = KnockoutModalDismissal.objects.get_or_create(user=request.user)
+    if request.POST.get('modal_type') == 'admin':
+        obj.admin_dismissed = True
+        obj.save(update_fields=['admin_dismissed'])
+    else:
+        obj.dismissed = True
+        obj.save(update_fields=['dismissed'])
+    return JsonResponse({'status': 'ok'})

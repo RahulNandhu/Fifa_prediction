@@ -4,6 +4,7 @@ from django.contrib import messages
 from django.contrib.admin.views.decorators import staff_member_required
 from django.contrib.auth import get_user_model
 from django.contrib.auth.decorators import login_required
+from django.http import JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
 from django.utils import timezone
@@ -141,6 +142,34 @@ def leaderboard(request):
         context['entries'] = leaderboard_service.overall_leaderboard(selected_group)
 
     return render(request, 'predictions/leaderboard.html', context)
+
+
+@login_required
+def leader_taunt(request):
+    """Return JSON with the group leader's name and lead margin for the taunt toast."""
+    groups = _leaderboard_groups(request.user)
+    if not groups:
+        return JsonResponse({})
+
+    import random
+    group = random.choice(groups)
+    entries = leaderboard_service.overall_leaderboard(group)
+
+    if len(entries) < 2 or entries[0]['points'] == 0:
+        return JsonResponse({})
+
+    leader = entries[0]
+    second = entries[1]
+    lead = leader['points'] - second['points']
+    name = leader['user'].get_full_name() or leader['user'].username
+
+    return JsonResponse({
+        'name': name,
+        'points': leader['points'],
+        'lead': lead,
+        'group': group.name,
+        'is_me': leader['user'] == request.user,
+    })
 
 
 @staff_member_required

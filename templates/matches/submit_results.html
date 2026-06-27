@@ -9,6 +9,7 @@
 <p class="text-muted">
     Enter the final score for a match and save. Points for every user's prediction will be
     calculated automatically and applied across all contest groups.
+    For knockout matches that end in a draw after 120 min, also enter the penalty shootout score.
 </p>
 <div class="table-responsive">
 <table class="table table-hover align-middle">
@@ -23,24 +24,49 @@
     <tbody>
         {% for row in rows %}
         <tr>
-            <td>{{ row.match.home_team }} vs {{ row.match.away_team }}</td>
+            <td>
+                {{ row.match.home_team }} vs {{ row.match.away_team }}
+                {% if row.match.is_knockout %}<span class="badge bg-warning text-dark ms-1">KO</span>{% endif %}
+            </td>
             <td>{{ row.match.kickoff_at }}</td>
             <td>
                 {% if row.match.has_result %}
-                <span class="badge bg-success">{{ row.match.home_score }} - {{ row.match.away_score }}</span>
+                <span class="badge bg-success">{{ row.match.home_score }} – {{ row.match.away_score }}</span>
+                {% if row.match.has_penalty_result %}
+                <br><span class="badge bg-info text-dark mt-1">Pens: {{ row.match.penalty_home_score }} – {{ row.match.penalty_away_score }}</span>
+                {% endif %}
                 {% else %}
                 <span class="badge bg-secondary">Pending</span>
                 {% endif %}
             </td>
             <td>
-                <form method="post" action="{% url 'matches:submit_results' %}" class="d-flex align-items-center gap-2">
+                <form method="post" action="{% url 'matches:submit_results' %}">
                     {% csrf_token %}
                     <input type="hidden" name="match_id" value="{{ row.match.id }}">
-                    {{ row.form.home_score }}
-                    <span>&ndash;</span>
-                    {{ row.form.away_score }}
-                    <button type="submit" class="btn btn-sm btn-primary">Save</button>
+
+                    <div class="d-flex align-items-center gap-2 flex-wrap">
+                        {{ row.form.home_score }}
+                        <span class="fw-bold">&ndash;</span>
+                        {{ row.form.away_score }}
+                        <button type="submit" class="btn btn-sm btn-primary">Save</button>
+                    </div>
+
                 </form>
+
+                {% if row.match.is_knockout and row.match.has_result and row.match.home_score == row.match.away_score %}
+                <form method="post" action="{% url 'matches:submit_results' %}" class="mt-2">
+                    {% csrf_token %}
+                    <input type="hidden" name="match_id" value="{{ row.match.id }}">
+                    <input type="hidden" name="save_type" value="penalty">
+                    <div class="d-flex align-items-center gap-2 flex-wrap">
+                        <span class="text-muted small">&#9917; Pens:</span>
+                        {{ row.penalty_form.penalty_home_score }}
+                        <span class="fw-bold">&ndash;</span>
+                        {{ row.penalty_form.penalty_away_score }}
+                        <button type="submit" class="btn btn-sm btn-warning">Save Penalties</button>
+                    </div>
+                </form>
+                {% endif %}
             </td>
         </tr>
         {% endfor %}

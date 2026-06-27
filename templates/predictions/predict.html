@@ -14,6 +14,9 @@
         {{ match.fixture.stage }}{% if match.fixture.stage and match.fixture.venue %} &middot; {% endif %}{{ match.fixture.venue }}
     </p>
     {% endif %}
+    {% if match.is_knockout %}
+    <span class="badge bg-warning text-dark mb-2">&#9889; Knockout Match</span>
+    {% endif %}
     <div class="row text-center mt-3 gx-2">
         <div class="col-6">
             <div class="small text-uppercase opacity-75">Kickoff</div>
@@ -26,12 +29,18 @@
     </div>
 </div>
 
+{% if match.is_knockout %}
+<div class="alert alert-info mb-3">
+    <strong>&#9889; Knockout scoring:</strong> 2 pts for correct result (120 min) &middot; 2 pts for exact scoreline &middot; +1 bonus for both &middot; 2 pts for correct penalty shootout score (if draw) &middot; +1 bonus for all three correct
+</div>
+{% endif %}
+
 <form method="post">
     {% csrf_token %}
 
     <div class="card mb-3 predict-card">
         <div class="card-body">
-            <h5 class="card-title mb-3">&#127942; Who will win?</h5>
+            <h5 class="card-title mb-3">&#127942; Who will win{% if match.is_knockout %} after 120 minutes?{% else %}?{% endif %}</h5>
             <div class="winner-options">
                 {% for radio in form.predicted_winner %}
                 <label class="winner-option">
@@ -48,7 +57,7 @@
 
     <div class="card mb-3 predict-card">
         <div class="card-body">
-            <h5 class="card-title mb-3">&#128202; Predict the exact scoreline</h5>
+            <h5 class="card-title mb-3">&#128202; Predict the exact scoreline{% if match.is_knockout %} (after 120 min){% endif %}</h5>
             <div class="scoreline-input">
                 <div class="scoreline-team">
                     <div class="scoreline-team-name">{{ match.home_team }}</div>
@@ -63,9 +72,49 @@
         </div>
     </div>
 
+    {% if match.is_knockout %}
+    <div id="penalty-section" class="card mb-3 predict-card" style="display:none;">
+        <div class="card-body">
+            <h5 class="card-title mb-3">&#9917; Predict the penalty shootout score <span class="badge bg-success ms-1">+2 pts</span></h5>
+            <p class="text-muted small mb-3">Only counts if the match ends in a draw after 120 minutes. Leave blank to skip.</p>
+            <div class="scoreline-input">
+                <div class="scoreline-team">
+                    <div class="scoreline-team-name">{{ match.home_team }}</div>
+                    {% bootstrap_field form.predicted_penalty_home_score show_label=False %}
+                </div>
+                <div class="scoreline-sep">:</div>
+                <div class="scoreline-team">
+                    <div class="scoreline-team-name">{{ match.away_team }}</div>
+                    {% bootstrap_field form.predicted_penalty_away_score show_label=False %}
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
     <div class="d-flex flex-wrap gap-2">
         {% bootstrap_button "Save Prediction" button_type="submit" button_class="btn btn-primary" %}
         <a href="{% url 'matches:upcoming' %}" class="btn btn-outline-secondary">Cancel</a>
     </div>
 </form>
 {% endblock %}
+
+{% if match.is_knockout %}
+{% block extra_js %}
+<script>
+(function () {
+    const drawValue = 'DRAW';
+    const section = document.getElementById('penalty-section');
+    const radios = document.querySelectorAll('input[name="predicted_winner"]');
+
+    function updatePenaltySection() {
+        const checked = document.querySelector('input[name="predicted_winner"]:checked');
+        section.style.display = (checked && checked.value === drawValue) ? '' : 'none';
+    }
+
+    radios.forEach(function (r) { r.addEventListener('change', updatePenaltySection); });
+    updatePenaltySection();
+})();
+</script>
+{% endblock %}
+{% endif %}
