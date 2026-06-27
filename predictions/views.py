@@ -146,30 +146,49 @@ def leaderboard(request):
 
 @login_required
 def leader_taunt(request):
-    """Return JSON with the group leader's name and lead margin for the taunt toast."""
+    """Return JSON with full leaderboard context for the taunt toast."""
+    import random as _random
     groups = _leaderboard_groups(request.user)
     if not groups:
         return JsonResponse({})
 
-    import random
-    group = random.choice(groups)
+    group = _random.choice(groups)
     entries = leaderboard_service.overall_leaderboard(group)
 
-    if len(entries) < 2 or entries[0]['points'] == 0:
+    if not entries or entries[0]['points'] == 0:
         return JsonResponse({})
 
-    leader = entries[0]
-    second = entries[1]
-    lead = leader['points'] - second['points']
-    name = leader['user'].get_full_name() or leader['user'].username
+    def fmt(e):
+        return {
+            'name': e['user'].get_full_name() or e['user'].username,
+            'points': e['points'],
+            'rank': e['rank'],
+            'is_me': e['user'] == request.user,
+        }
 
-    return JsonResponse({
-        'name': name,
-        'points': leader['points'],
-        'lead': lead,
-        'group': group.name,
-        'is_me': leader['user'] == request.user,
-    })
+    result = {'group': group.name, 'leader': fmt(entries[0])}
+
+    if len(entries) >= 2:
+        result['second'] = fmt(entries[1])
+        result['leader']['lead'] = entries[0]['points'] - entries[1]['points']
+
+    if len(entries) >= 3:
+        result['third'] = fmt(entries[2])
+
+    me_entry = next((e for e in entries if e['user'] == request.user), None)
+    if me_entry:
+        me_data = fmt(me_entry)
+        if me_entry['rank'] > 1:
+            me_data['behind'] = entries[0]['points'] - me_entry['points']
+        result['me'] = me_data
+
+    weeks = leaderboard_service.available_weeks(group)
+    if weeks:
+        week_entries = leaderboard_service.weekly_leaderboard(group, weeks[0])
+        if week_entries and week_entries[0]['points'] > 0:
+            result['week_leader'] = fmt(week_entries[0])
+
+    return JsonResponse(result)
 
 
 @staff_member_required

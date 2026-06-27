@@ -4,33 +4,73 @@
 
 {% block content %}
 <div class="hero-banner">
-    <h2>Welcome, {{ user.first_name|default:user.username }}! &#9917;</h2>
-    <p>Here's your prediction contest snapshot.</p>
+    <div class="hero-banner-inner">
+        <div class="hero-banner-text">
+            <h2 class="mb-1">Welcome, {{ user.first_name|default:user.username }}!</h2>
+            <p class="mb-0 opacity-75" style="font-size:.9rem;">World Cup Prediction Contest</p>
+            {% if leaderboard_summaries or open_match_ids %}
+            <div class="hero-stats-row">
+                {% if leaderboard_summaries %}
+                <div class="hero-stat-item">
+                    <span class="hero-stat-num">#{{ leaderboard_summaries.0.rank }}</span>
+                    <span class="hero-stat-lbl">Rank</span>
+                </div>
+                <div class="hero-stat-divider"></div>
+                <div class="hero-stat-item">
+                    <span class="hero-stat-num">{{ leaderboard_summaries.0.points }}</span>
+                    <span class="hero-stat-lbl">Points</span>
+                </div>
+                <div class="hero-stat-divider"></div>
+                {% endif %}
+                <div class="hero-stat-item">
+                    <span class="hero-stat-num">{{ open_match_ids|length }}</span>
+                    <span class="hero-stat-lbl">Open</span>
+                </div>
+                <div class="hero-stat-divider"></div>
+                <div class="hero-stat-item">
+                    <span class="hero-stat-num">{{ predicted_match_ids|length }}</span>
+                    <span class="hero-stat-lbl">Predicted</span>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+        <div class="hero-deco d-none d-md-block">
+            <span class="hd-trophy">&#127942;</span>
+            <span class="hd-ball hd-ball-lg">&#9917;</span>
+            <span class="hd-ball hd-ball-md">&#9917;</span>
+            <span class="hd-ball hd-ball-sm">&#9917;</span>
+            <span class="hd-ball hd-ball-xs">&#9917;</span>
+        </div>
+    </div>
 </div>
 
 <div class="row">
     <div class="col-md-7">
         <div class="card mb-4">
-            <div class="card-header">&#9917; Upcoming Matches</div>
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <span>&#9917; Upcoming Matches</span>
+                {% if open_match_ids %}<span class="badge bg-warning text-dark">{{ open_match_ids|length }} open</span>{% endif %}
+            </div>
             <div class="card-body">
                 {% if upcoming_matches %}
-                <div class="table-responsive">
-                <table class="table table-sm align-middle">
+                <div class="table-responsive overflow-hidden">
+                <table class="table table-sm align-middle dash-upcoming-table">
                     <thead>
                         <tr>
                             <th>Match</th>
-                            <th>Kickoff</th>
-                            <th></th>
+                            <th class="text-end">Action</th>
                         </tr>
                     </thead>
                     <tbody>
                         {% for match in upcoming_matches %}
                         <tr>
                             <td>
-                                {{ match.home_team }} vs {{ match.away_team }}
-                                {% if match.is_knockout %}<span class="badge bg-warning text-dark ms-1" style="font-size:.65rem;">KO</span>{% endif %}
+                                <span class="fw-semibold">{{ match.home_team }}</span>
+                                <span class="dash-vs">vs</span>
+                                <span class="fw-semibold">{{ match.away_team }}</span>
+                                {% if match.is_knockout %}<span class="badge bg-warning text-dark ms-1" style="font-size:.6rem;">KO</span>{% endif %}
+                                <div class="dash-kickoff">&#128337; {{ match.kickoff_at|date:"D, M j · H:i" }}</div>
                             </td>
-                            <td class="text-nowrap" style="font-size:.85rem;">{{ match.kickoff_at }}</td>
                             <td class="text-end text-nowrap">
                                 {% if match.id in open_match_ids and is_approved %}
                                     {% if match.id in predicted_match_ids %}
@@ -49,7 +89,7 @@
                     </tbody>
                 </table>
                 </div>
-                <a href="{% url 'matches:upcoming' %}" class="btn btn-sm btn-outline-primary">View All Matches</a>
+                <a href="{% url 'matches:upcoming' %}" class="btn btn-sm btn-outline-primary w-100 mt-2">View All Matches &rarr;</a>
                 {% else %}
                 <p class="mb-0">No published matches yet.</p>
                 {% endif %}
@@ -59,7 +99,10 @@
 
     <div class="col-md-5">
         <div class="card mb-4">
-            <div class="card-header">&#128101; Group Membership Status</div>
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <span>&#128101; My Groups</span>
+                {% if memberships %}<span class="badge bg-white text-success">{{ memberships|length }}</span>{% endif %}
+            </div>
             <div class="card-body">
                 {% if memberships %}
                 <ul class="list-group list-group-flush">
@@ -79,23 +122,29 @@
                 {% else %}
                 <p>You haven't requested to join any contest groups yet.</p>
                 {% endif %}
-                <a href="{% url 'contests:groups' %}" class="btn btn-sm btn-outline-primary mt-3">Manage Groups</a>
+                <a href="{% url 'contests:groups' %}" class="btn btn-sm btn-outline-primary w-100 mt-3">Manage Groups &rarr;</a>
             </div>
         </div>
 
         <div class="card mb-4">
-            <div class="card-header">&#127942; Leaderboard Summary</div>
+            <div class="card-header">&#127942; Your Standing</div>
             <div class="card-body">
                 {% if leaderboard_summaries %}
                 <ul class="list-group list-group-flush">
                     {% for summary in leaderboard_summaries %}
-                    <li class="list-group-item">
-                        <strong>{{ summary.group.name }}</strong><br>
-                        Rank {{ summary.rank }} of {{ summary.total_participants }} &mdash; {{ summary.points }} points
+                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                        <div>
+                            <strong>{{ summary.group.name }}</strong>
+                            <div class="text-muted small">{{ summary.total_participants }} player{{ summary.total_participants|pluralize }}</div>
+                        </div>
+                        <div class="text-end">
+                            <div class="dash-rank">#{{ summary.rank }}</div>
+                            <div class="dash-pts">{{ summary.points }} pts</div>
+                        </div>
                     </li>
                     {% endfor %}
                 </ul>
-                <a href="{% url 'predictions:leaderboard' %}" class="btn btn-sm btn-outline-primary mt-3">View Leaderboards</a>
+                <a href="{% url 'predictions:leaderboard' %}" class="btn btn-sm btn-outline-primary w-100 mt-3">Full Leaderboard &rarr;</a>
                 {% else %}
                 <p class="mb-0">Join an approved group to see your leaderboard standing.</p>
                 {% endif %}

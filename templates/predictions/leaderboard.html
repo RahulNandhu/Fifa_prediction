@@ -3,7 +3,19 @@
 {% block title %}Leaderboard - FIFA Prediction Contest{% endblock %}
 
 {% block content %}
-<h2 class="mb-4">&#127942; Leaderboard</h2>
+<div class="lb-page-header mb-4">
+    <div class="lb-header-inner">
+        <div>
+            <h2 class="mb-0">&#127942; Leaderboard</h2>
+            {% if selected_group %}<p class="mb-0 mt-1 opacity-75" style="font-size:.9rem;">{{ selected_group.name }}</p>{% endif %}
+        </div>
+        <div class="d-none d-md-flex align-items-center gap-2">
+            <span style="font-size:1.8rem;opacity:.6;">&#129352;</span>
+            <span style="font-size:2.4rem;filter:drop-shadow(0 4px 12px rgba(255,215,0,.6));">&#129351;</span>
+            <span style="font-size:1.8rem;opacity:.6;">&#129353;</span>
+        </div>
+    </div>
+</div>
 
 <ul class="nav nav-pills mb-3">
     <li class="nav-item">
@@ -38,8 +50,29 @@
     </div>
     {% endif %}
 </form>
-{% else %}
-<h5 class="text-muted mb-3">{{ selected_group.name }}</h5>
+{% endif %}
+
+{% if entries|length >= 2 and entries.0.points > 0 %}
+<div class="lb-podium mb-4">
+    <div class="podium-slot podium-silver">
+        <div class="podium-medal">&#129352;</div>
+        <div class="podium-name">{{ entries.1.user.first_name|default:entries.1.user.username }} {{ entries.1.user.last_name }}</div>
+        <div class="podium-pts">{{ entries.1.points }}<span class="podium-pts-unit">pts</span></div>
+    </div>
+    <div class="podium-slot podium-gold">
+        <div class="podium-crown">&#128081;</div>
+        <div class="podium-medal">&#129351;</div>
+        <div class="podium-name">{{ entries.0.user.first_name|default:entries.0.user.username }} {{ entries.0.user.last_name }}</div>
+        <div class="podium-pts">{{ entries.0.points }}<span class="podium-pts-unit">pts</span></div>
+    </div>
+    {% if entries|length >= 3 %}
+    <div class="podium-slot podium-bronze">
+        <div class="podium-medal">&#129353;</div>
+        <div class="podium-name">{{ entries.2.user.first_name|default:entries.2.user.username }} {{ entries.2.user.last_name }}</div>
+        <div class="podium-pts">{{ entries.2.points }}<span class="podium-pts-unit">pts</span></div>
+    </div>
+    {% endif %}
+</div>
 {% endif %}
 
 {% if entries %}
@@ -56,13 +89,18 @@
         {% for entry in entries %}
         <tr class="{% if entry.user == user %}table-primary{% elif entry.rank == 1 %}rank-1{% elif entry.rank == 2 %}rank-2{% elif entry.rank == 3 %}rank-3{% endif %}">
             <td>
-                {% if entry.rank == 1 %}<span class="medal">&#129351;</span>
-                {% elif entry.rank == 2 %}<span class="medal">&#129352;</span>
-                {% elif entry.rank == 3 %}<span class="medal">&#129353;</span>
-                {% endif %}{{ entry.rank }}
+                <span class="lb-rank-badge lb-rank-{{ entry.rank }}">
+                    {% if entry.rank == 1 %}&#129351;
+                    {% elif entry.rank == 2 %}&#129352;
+                    {% elif entry.rank == 3 %}&#129353;
+                    {% else %}{{ entry.rank }}{% endif %}
+                </span>
             </td>
-            <td>{{ entry.user.first_name|default:entry.user.username }} {{ entry.user.last_name }}</td>
-            <td>{{ entry.points }}</td>
+            <td>
+                {{ entry.user.first_name|default:entry.user.username }} {{ entry.user.last_name }}
+                {% if entry.user == user %}<span class="badge bg-warning text-dark ms-1" style="font-size:.65rem;">You</span>{% endif %}
+            </td>
+            <td><span class="lb-pts">{{ entry.points }}</span></td>
         </tr>
         {% endfor %}
     </tbody>

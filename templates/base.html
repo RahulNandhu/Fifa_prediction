@@ -14,7 +14,7 @@
 <body>
 <nav class="navbar navbar-expand-lg navbar-dark app-navbar mb-4">
     <div class="container">
-        <a class="navbar-brand" href="{% url 'accounts:dashboard' %}">&#127942; FIFA Prediction Contest</a>
+        <a class="navbar-brand" href="{% url 'accounts:dashboard' %}">&#9917; FIFA Prediction Contest</a>
         <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navMain">
             <span class="navbar-toggler-icon"></span>
         </button>
@@ -88,36 +88,58 @@
 #leaderTauntToast .toast-body {
     background: linear-gradient(160deg, #0f3460 0%, #1a1a2e 100%);
     color: #f0f0f0;
-    font-size: .9rem;
+    font-size: .88rem;
     line-height: 1.5;
     padding: .75rem .85rem .8rem;
 }
 #leaderTauntToast .taunt-group {
-    display: inline-block;
+    display: block;
     margin-top: .45rem;
-    font-size: .75rem;
-    color: rgba(255,255,255,.45);
+    font-size: .72rem;
+    color: rgba(255,255,255,.4);
     letter-spacing: .02em;
 }
-#leaderTauntToast .taunt-pts {
+#leaderTauntToast .taunt-chip {
     display: inline-block;
-    background: rgba(255,215,0,.15);
-    border: 1px solid rgba(255,215,0,.35);
-    color: #ffd700;
     border-radius: 2rem;
-    font-size: .72rem;
+    font-size: .7rem;
     font-weight: 600;
     padding: .1rem .55rem;
-    margin-left: .35rem;
+    margin-left: .3rem;
     letter-spacing: .03em;
     vertical-align: middle;
+}
+#leaderTauntToast .taunt-chip-gold {
+    background: rgba(255,215,0,.18);
+    border: 1px solid rgba(255,215,0,.4);
+    color: #ffd700;
+}
+#leaderTauntToast .taunt-chip-silver {
+    background: rgba(192,192,192,.15);
+    border: 1px solid rgba(192,192,192,.35);
+    color: #d0d0d0;
+}
+#leaderTauntToast .taunt-chip-me {
+    background: rgba(15,110,79,.25);
+    border: 1px solid rgba(15,200,120,.4);
+    color: #7effc0;
+}
+#leaderTauntToast .taunt-chip-week {
+    background: rgba(100,180,255,.15);
+    border: 1px solid rgba(100,180,255,.35);
+    color: #90cfff;
+}
+#leaderTauntToast .taunt-scoreboard {
+    font-size: .8rem;
+    margin-top: .4rem;
+    line-height: 1.8;
 }
 </style>
 <div aria-live="polite" aria-atomic="true" class="position-fixed bottom-0 end-0 p-3" style="z-index:1100">
     <div id="leaderTauntToast" class="toast border-0" role="alert" data-bs-autohide="true">
         <div class="toast-header">
-            <span style="font-size:1.15rem;margin-right:.5rem;">🏆</span>
-            <strong class="me-auto" style="color:#ffd700;letter-spacing:.03em;font-size:.85rem;">CONTEST ALERT</strong>
+            <span id="tauntIcon" style="font-size:1.15rem;margin-right:.5rem;">⚽</span>
+            <strong id="tauntTitle" class="me-auto" style="color:#ffd700;letter-spacing:.03em;font-size:.82rem;">CONTEST UPDATE</strong>
             <small style="color:rgba(255,255,255,.4);font-size:.72rem;">Live</small>
             <button type="button" class="btn-close btn-close-white ms-2" data-bs-dismiss="toast" aria-label="Close" style="font-size:.7rem;"></button>
         </div>
@@ -126,63 +148,172 @@
 </div>
 <script>
 (function () {
-    var taunts = [
-        "👑 {name} is absolutely DOMINATING! Leading by {lead} pts. The rest of you are just spectators. 😤",
-        "🔥 {name} is on fire! {lead} points clear of everyone. Are you even trying? 👀",
-        "😏 Plot twist: {name} is STILL winning. +{lead} pts and counting...",
-        "🚀 {name} has left the chat... and the competition behind. By {lead} whole points.",
-        "⚽ Scientists cannot explain how {name} is {lead} points ahead. They just are.",
-        "😎 {name} predicted it all. Every. Single. Result. Currently {lead} pts ahead. Scary stuff.",
-        "🤌 Rumour has it {name}'s predictions are scripted. {lead} points clear and still going.",
-        "💀 {lead} points. That's the gap. That's the tweet. — {name}",
-        "🧠 {name} said 'hold my scoreline' and is now {lead} pts ahead. Respect.",
-        "😂 Breaking news: {name} leads by {lead} points. Everyone else in denial.",
-        "🎯 {name} is built different. {lead} points different, to be precise.",
-        "🫡 {name} sent their condolences to the rest of the group. Also, they lead by {lead} pts.",
-    ];
 
-    var selfTaunts = [
-        "😤 That's YOU at the top! {lead} pts clear. Let them sweat.",
-        "👑 You're literally the main character right now. +{lead} pts and THRIVING.",
-        "🏆 Congrats, you predicted this. All of it. Now sit back and enjoy the lead.",
-        "😎 +{lead} pts ahead. You're not just playing — you're winning. Big difference.",
-        "🚀 You've left everyone behind by {lead} points. Don't look down.",
-        "🤌 {lead} points clear. They're not even close. Keep it that way.",
-        "💅 The leaderboard called. It wants you to know you're winning by {lead} pts.",
-        "🎯 You're the problem everyone else is trying to solve. +{lead} pts and counting.",
-        "😂 Others are predicting. You're just... right. Leading by {lead} pts.",
-        "🔥 They're all chasing your shadow. {lead} points worth of shadow.",
-    ];
+    /* ── Message pools ─────────────────────────────────────────────────── */
+    var msgs = {
+        leader: [
+            "⚽ {name} is running this contest! Leading with {points} pts, {lead} clear of everyone.",
+            "🏆 {name} has been calling results right all tournament. Currently {lead} pts ahead.",
+            "🧠 {name} is predicting like a seasoned scout. Top of the table with {points} pts.",
+            "🔥 One name sits at the top of the leaderboard: {name}. And they've earned it.",
+            "😤 {name} is making this look straightforward. {lead} points between them and 2nd place.",
+            "🥇 Solid work from {name} — {points} pts on the board and {lead} ahead.",
+            "📊 Current standings: {name} in front by {lead} points. Keep predicting, everyone!",
+            "⚡ {name} is in form — {points} pts and a {lead}-point cushion at the top.",
+            "🎯 Accurate predictions from {name}. They're at {points} pts and not letting up.",
+            "🌟 {name} has found their rhythm. {lead} pts clear and looking settled up top.",
+            "💪 Credit where it's due — {name} leads the group with {points} points.",
+            "🤝 {name} is setting the standard. {lead} pts ahead and the bar is high.",
+            "⚽ The table doesn't lie — {name} on top with {points} pts. Consistent.",
+            "🏅 {name} leads the contest with {points} pts. Great reading of the game.",
+        ],
+        leaderMe: [
+            "😎 That's you at the top! {points} pts and {lead} ahead. Keep predicting well.",
+            "🏆 You've been calling it right — {points} pts and leading by {lead}. Well played.",
+            "💪 You're the one everyone else is chasing right now. {lead} points of breathing room.",
+            "🎯 {points} points. Still #1. Stay focused and keep the form going.",
+            "🔥 Leading by {lead} points. Others are working hard to catch you — stay sharp.",
+            "⚽ Top of the table and it belongs to you. {points} pts in the bank.",
+            "😤 You built that lead one accurate prediction at a time. {lead} pts clear.",
+            "👊 {points} points and first place. Strong stuff — keep it going.",
+            "🌟 The hard work is paying off — {points} pts and you're ahead by {lead}.",
+            "⚡ You earned that top spot. {lead} pts of daylight. Protect it.",
+        ],
+        second: [
+            "🥈 Hot on the leader's heels — {name} is in 2nd with {points} pts. Very much alive.",
+            "⚡ Don't overlook {name}! 2nd place, {points} pts, and still very much in it.",
+            "🔄 {name} is hunting down the top spot from 2nd with {points} pts. Watch this space.",
+            "👀 {name} in silver position with {points} pts — they're not going anywhere.",
+            "💨 {name} is keeping the pressure on from 2nd. {points} pts and closing.",
+            "🥈 {name} sits 2nd with {points} pts. One good week could change everything.",
+            "🎯 Silver medal position for {name} right now — {points} pts and competing hard.",
+            "🏃 {name} is in the hunt! 2nd place and {points} pts. It's still wide open.",
+            "⚽ {name} in 2nd — {points} pts and waiting for their moment. Patient.",
+            "📈 {name} is right there in 2nd. {points} pts. Don't write them off.",
+        ],
+        secondMe: [
+            "🥈 You're in 2nd place with {points} pts. The top spot is right there — keep going.",
+            "💪 P2 is where you are — {points} pts. One strong week and you could be leading.",
+            "🎯 You're right there in 2nd. Don't let them pull away — {points} pts and hunting.",
+            "⚡ 2nd place with {points} pts. You're well placed — keep predicting accurately.",
+            "🏃 So close to the top! {points} pts in 2nd. Stay consistent and it could be yours.",
+        ],
+        top3: [
+            "📊 Top 3 right now — 🥇 {n1} ({p1} pts) · 🥈 {n2} ({p2} pts) · 🥉 {n3} ({p3} pts)",
+            "🏆 Podium battle: {n1} leads, {n2} giving chase, {n3} lurking. Tight at the top!",
+            "📈 Standings update — 🥇 {n1} {p1}pts · 🥈 {n2} {p2}pts · 🥉 {n3} {p3}pts",
+            "🔝 Who's in contention? {n1} ({p1}) · {n2} ({p2}) · {n3} ({p3}). Still all to play for.",
+            "⚽ The top 3: {n1} out front with {p1} pts, then {n2} and {n3} making it interesting.",
+            "🎯 Three names at the top — {n1}, {n2}, {n3}. Only one trophy though.",
+            "🔥 Scoreboard check: {n1} {p1}pts · {n2} {p2}pts · {n3} {p3}pts. Every point matters.",
+        ],
+        me: [
+            "📌 You're ranked #{rank} with {points} pts — {behind} pts between you and the lead.",
+            "💬 Your position: #{rank}. {points} pts banked. Keep predicting and climb the table.",
+            "🏃 You're sitting #{rank} right now. {behind} pts to make up — it's very possible.",
+            "📊 #{rank} is your spot with {points} pts. Every upcoming match is a chance to move.",
+            "🎯 Current rank: #{rank} · {points} pts. There's still plenty of football left.",
+            "⚽ You're #{rank} in the group. {behind} points off the top — matches still to go.",
+            "💪 #{rank} and {points} pts. You're very much in the contest.",
+            "🔍 Checking in: you're #{rank} with {points} pts. {behind} to the top. Stay in it.",
+            "📈 #{rank} position with {points} pts. The table can shift quickly — keep predicting.",
+            "⚡ You're at #{rank} with {points} pts. {behind} pts off the pace. Still in the race.",
+        ],
+        week: [
+            "📅 This week's standout: {name} leads the gameweek with {points} pts!",
+            "⚡ Weekly form player: {name} is top scorer this week with {points} pts.",
+            "🌟 {name} is on a roll — leading this gameweek with {points} pts scored.",
+            "🔥 Form of the week goes to {name}: {points} pts and counting.",
+            "📈 Gameweek leader: {name} with {points} pts. Strong week from them.",
+            "⚽ This week's best predictor: {name} on {points} pts. Sharp.",
+            "🎯 {name} is on target this week — {points} pts and topping the weekly charts.",
+            "💫 Best performer this week: {name} with {points} pts. Consistent predicting.",
+            "🏅 {name} is the gameweek leader with {points} pts. Excellent reading of the game.",
+        ],
+        weekMe: [
+            "📅 You're leading this week with {points} pts! Keep the accurate predictions coming.",
+            "⚡ Top of the weekly table — that's you with {points} pts this gameweek.",
+            "🌟 This week is going your way — {points} pts and leading the gameweek. Keep it up.",
+            "🔥 You're the form player this week. {points} pts. Stay focused.",
+        ],
+    };
 
-    function pickTaunt(name, lead, isMe) {
-        var list = isMe ? selfTaunts : taunts;
-        var t = list[Math.floor(Math.random() * list.length)];
-        return t.replace(/\{name\}/g, name).replace(/\{lead\}/g, lead);
+    function pick(arr) { return arr[Math.floor(Math.random() * arr.length)]; }
+    function sub(tpl, map) {
+        return tpl.replace(/\{(\w+)\}/g, function(_, k) { return map[k] !== undefined ? map[k] : ''; });
+    }
+    function chip(text, cls) {
+        return '<span class="taunt-chip taunt-chip-' + cls + '">' + text + '</span>';
     }
 
-    function showTaunt() {
+    var cardTypes = ['leader', 'second', 'top3', 'me', 'week'];
+
+    function buildToast(data) {
+        var available = ['leader'];
+        if (data.second) available.push('second');
+        if (data.third && data.second) available.push('top3');
+        if (data.me && data.me.rank > 1) available.push('me');
+        if (data.week_leader) available.push('week');
+
+        var type = pick(available);
+
+        var icon = '⚽', title = 'CONTEST UPDATE', body = '', chipHtml = '';
+
+        if (type === 'leader') {
+            var isMe = data.leader.is_me;
+            var pool = isMe ? msgs.leaderMe : msgs.leader;
+            var lead = data.leader.lead || 0;
+            body = sub(pick(pool), {name: data.leader.name, points: data.leader.points, lead: lead});
+            chipHtml = chip('🥇 ' + data.leader.points + ' pts', 'gold');
+            icon = '🥇'; title = 'TABLE LEADER';
+        } else if (type === 'second') {
+            var isMe2 = data.second.is_me;
+            var pool2 = isMe2 ? msgs.secondMe : msgs.second;
+            body = sub(pick(pool2), {name: data.second.name, points: data.second.points});
+            chipHtml = chip('🥈 2nd place', 'silver');
+            icon = '🥈'; title = 'SILVER SPOT';
+        } else if (type === 'top3') {
+            body = sub(pick(msgs.top3), {
+                n1: data.leader.name, p1: data.leader.points,
+                n2: data.second.name, p2: data.second.points,
+                n3: data.third.name,  p3: data.third.points,
+            });
+            icon = '🏆'; title = 'TOP 3 UPDATE';
+        } else if (type === 'me') {
+            body = sub(pick(msgs.me), {rank: data.me.rank, points: data.me.points, behind: data.me.behind || 0});
+            chipHtml = chip('#' + data.me.rank + ' · ' + data.me.points + ' pts', 'me');
+            icon = '📍'; title = 'YOUR POSITION';
+        } else if (type === 'week') {
+            var isWeekMe = data.week_leader.is_me;
+            var poolW = isWeekMe ? msgs.weekMe : msgs.week;
+            body = sub(pick(poolW), {name: data.week_leader.name, points: data.week_leader.points});
+            chipHtml = chip('⚡ This week', 'week');
+            icon = '📅'; title = 'WEEK IN REVIEW';
+        }
+
+        var group = data.group ? '<span class="taunt-group">📊 ' + data.group + '</span>' : '';
+        document.getElementById('leaderTauntMsg').innerHTML = body + chipHtml + group;
+        document.getElementById('tauntIcon').textContent = icon;
+        document.getElementById('tauntTitle').textContent = title;
+
+        var toastEl = document.getElementById('leaderTauntToast');
+        var stayMs = (7 + Math.random() * 3) * 1000;
+        var existing = bootstrap.Toast.getInstance(toastEl);
+        if (existing) existing.dispose();
+        new bootstrap.Toast(toastEl, {autohide: true, delay: stayMs}).show();
+    }
+
+    function fetchAndShow() {
         fetch("{% url 'predictions:leader_taunt' %}", {credentials: 'same-origin'})
-            .then(function (r) { return r.json(); })
-            .then(function (data) {
-                if (!data.name) return;
-                var msg = pickTaunt(data.name, data.lead, data.is_me);
-                var group = data.group ? '<span class="taunt-group">📊 ' + data.group + '</span>' : '';
-                var pts = '<span class="taunt-pts">+' + data.lead + ' pts ahead</span>';
-                document.getElementById('leaderTauntMsg').innerHTML = msg + pts + '<br>' + group;
-                var toastEl = document.getElementById('leaderTauntToast');
-                var stayMs = (7 + Math.random() * 3) * 1000;
-                var existing = bootstrap.Toast.getInstance(toastEl);
-                if (existing) existing.dispose();
-                var toast = new bootstrap.Toast(toastEl, {autohide: true, delay: stayMs});
-                toast.show();
-            })
-            .catch(function () {});
+            .then(function(r) { return r.json(); })
+            .then(function(data) { if (data.leader) buildToast(data); })
+            .catch(function() {});
     }
 
     var firstDelay = (5 + Math.random() * 5) * 1000;
     setTimeout(function () {
-        showTaunt();
-        setInterval(showTaunt, (30 + Math.random() * 25) * 1000);
+        fetchAndShow();
+        setInterval(fetchAndShow, 15 * 1000);
     }, firstDelay);
 })();
 </script>
